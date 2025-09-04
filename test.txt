@@ -1,0 +1,191 @@
+Reusable Component
+ john  August 25, 2025 
+js
+const form = document.getElementById(‘studentform’);
+const userImg = document.getElementById(‘userImg’);
+const preview = document.getElementById(‘preview’);
+
+let editingRow = null;
+
+// image preview
+userImg.addEventListener(‘change’,()=>{
+const Imgfile = userImg.files[0];
+if(Imgfile){
+const ImageURL = URL.createObjectURL(Imgfile);
+preview.src = ImageURL;
+preview.style.display = ‘block’;
+}
+});
+
+form.addEventListener(‘submit’,(e)=>{
+e.preventDefault();
+
+const studentName = document.getElementById('studentName').value;
+const studentSubject = document.getElementById('subject').value;
+const studentmarks = document.getElementById('marks').value;
+
+const selectedCourses = [];
+document.querySelectorAll('input[name="course"]:checked').forEach(sub =>{
+    selectedCourses.push(sub.value);
+});
+const course = selectedCourses.join(",");
+
+const gender = document.querySelector('input[name="gender"]:checked').value;
+
+if(editingRow){
+    // update mode
+    editingRow.cells[0].innerHTML = studentName;
+    editingRow.cells[1].innerHTML = studentSubject;
+    editingRow.cells[2].innerHTML = studentmarks;
+    editingRow.cells[3].innerHTML = course;
+    editingRow.cells[4].innerHTML = gender;
+    editingRow.cells[5].innerHTML = <img src="${preview.src}" width="50px">;
+
+    editingRow = null;
+    document.getElementById("submitBtn").innerText = "Add";
+
+} else {
+    // add mode
+    const newrow = document.createElement('tr');
+    newrow.innerHTML = `
+        <td>${studentName}</td>
+        <td>${studentSubject}</td>
+        <td>${studentmarks}</td>
+        <td>${course}</td>
+        <td>${gender}</td>
+        <td><img src="${preview.src}" width="50px"></td>
+        <td><button class="editBtn">Edit</button></td>
+        <td><button class="deleteBtn">Delete</button></td>
+    `;
+    showdata.appendChild(newrow);
+
+    // edit button
+    newrow.querySelector(".editBtn").addEventListener('click',()=>{
+        document.getElementById("studentName").value = newrow.cells[0].innerHTML;
+        document.getElementById('subject').value = newrow.cells[1].innerHTML;
+        document.getElementById('marks').value = newrow.cells[2].innerHTML;
+
+        const selectedValues = newrow.cells[3].innerHTML.split(",");
+        document.querySelectorAll('input[name="course"]').forEach(sub =>{
+            sub.checked = selectedValues.includes(sub.value);
+        });
+
+        document.querySelector(input[name="gender"][value="${newrow.cells[4].innerHTML}"]).checked = true;
+
+        const img = newrow.cells[5].querySelector("img");
+        preview.src = img.src;
+        preview.style.display = 'block';
+
+        editingRow = newrow;
+        document.getElementById('submitBtn').innerText ="Update";
+  });
+
+    // delete button
+    newrow.querySelector('.deleteBtn').addEventListener('click',() => {
+        const confirmdelete = confirm("Are you sure you want to delete?");
+        if (confirmdelete)
+           newrow.remove();
+          form.reset();
+    });
+
+    form.reset();
+
+} });
+php
+query($sql); if ($s->num_rows > 0) { echo “”; exit(); } $query = “INSERT INTO my_data (name,email,password,gender,image,subjects) VALUES (‘$name’,’$email’,’$pass’,’$gender’,’$image’, ‘$subject_str’)”; if (empty($name) || empty($email) || empty($pass) || empty($gender) || empty($image) || empty($subject_str)) { echo “”; exit(); } $conn->query($query); header(“Location: myform.php”); exit(); } if (isset($_POST[‘update’])) { $id = $_POST[‘id’]; $name = $_POST[‘name’]; $email = $_POST[‘mail’]; $pass = $_POST[‘pass’]; $gender = $_POST[‘gender’]; $subjects = $_POST[‘subject’] ?? []; $subject_str = implode(“, “, $subjects); if (!empty($_FILES[‘img’][‘name’])) { $image = $_FILES[‘img’][‘name’]; $temp_name = $_FILES[‘img’][‘tmp_name’]; $folder = “images/” . $image; move_uploaded_file($temp_name, $folder); // update with new photo $query = “UPDATE my_data SET name=’$name’, email=’$email’, password=’$pass’, gender=’$gender’, image=’$image’, subjects=’$subject_str’ WHERE id=$id”; } else { // update without new photo $query = “UPDATE my_data SET name=’$name’, email=’$email’, password=’$pass’, gender=’$gender’, subjects=’$subject_str’ WHERE id=$id”; } $conn->query($query); header(“Location: myform.php”); exit(); } if (isset($_POST[‘delete’])) { $id = $_POST[‘id’]; $query = “DELETE FROM my_data WHERE id=$id”; $conn->query($query); header(“Location: myform.php”); exit(); } $editData = null; if (isset($_GET[‘id’])) { $id = $_GET[‘id’]; $result = $conn->query(“SELECT * FROM my_data WHERE id=$id”); $editData = $result->fetch_assoc(); } ?>
+
+
+
+My Form
+
+
+My Form
+<?php 
+$selectedSubjects = [];
+if (!empty($editData['subjects'])) {
+    $selectedSubjects = explode(", ", $editData['subjects']);
+}
+?>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="id" value="<?php echo $editData['id'] ?? ''; ?>">
+
+    NAME: <input type="text" name="name" value="<?php echo $editData['name'] ?? ''; ?>"><br>
+    EMAIL: <input type="email" name="mail" value="<?php echo $editData['email'] ?? ''; ?>"><br>
+
+    <label>
+        <input type="radio" name="gender" value="male" 
+            <?php if (($editData['gender'] ?? '') == 'male') echo 'checked'; ?>> Male
+    </label><br>
+    <label>
+        <input type="radio" name="gender" value="female" 
+            <?php if (($editData['gender'] ?? '') == 'female') echo 'checked'; ?>> Female
+    </label><br>
+
+    PASSWORD: <input type="password" name="pass" value="<?php echo $editData['password'] ?? ''; ?>"><br><br>
+
+    chosen subjects:<br>
+    <label>
+        <input type="checkbox" name="subject[]" value="Physics" 
+            <?php if (in_array("Physics", $selectedSubjects)) echo "checked"; ?>> Physics
+    </label><br>
+    <label>
+        <input type="checkbox" name="subject[]" value="Chemistry" 
+            <?php if (in_array("Chemistry", $selectedSubjects)) echo "checked"; ?>> Chemistry
+    </label><br>
+    <label>
+        <input type="checkbox" name="subject[]" value="Math" 
+            <?php if (in_array("Math", $selectedSubjects)) echo "checked"; ?>> Math
+    </label><br><br>
+
+    IMAGE: <input type="file" name="img"><br><br>
+
+    <?php if (!empty($editData['image'])) { ?>
+        Chosen Image : 
+        <img style="height:50px" src="images/<?php echo $editData['image']; ?>" alt="No image Selected"><br><br>
+    <?php } ?>
+
+    <?php if (isset($_GET['id'])) { ?>
+        <input type="submit" name="update" value="Update">
+    <?php } else { ?>
+        <input type="submit" name="submit" value="Add New">
+    <?php } ?>
+</form>
+
+<h2>Data in Table</h2>
+<table id="table">
+    <tr>
+        <th>id</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Password</th>
+        <th>Gender</th>
+        <th>Subjects</th>
+        <th>Image</th>
+        <th>Action</th>
+    </tr>
+
+    <?php 
+    $sql = "SELECT * FROM my_data";
+    $res = $conn->query($sql);
+    while ($row = $res->fetch_assoc()) { ?>
+        <tr>
+            <td><?php echo $row['id'] ?></td>
+            <td><?php echo $row['name'] ?></td>
+            <td><?php echo $row['email'] ?></td>
+            <td><?php echo $row['password'] ?></td>
+            <td><?php echo $row['gender'] ?></td>
+            <td><?php echo $row['subjects'] ?></td>
+            <td><img src="images/<?php echo $row['image'] ?>" width="80px" height="80px"></td>
+            <td><a href="myform.php?id=<?php echo $row['id']; ?>">Edit</a></td>
+            <td>
+                <form method="post">
+                    <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                    <button type="submit" name="delete" onclick="return confirm('Are you sure ?');"> Delete </button>
+                </form>
+            </td>
+        </tr>
+    <?php } ?>
+</table>
+</body>
+</html>
